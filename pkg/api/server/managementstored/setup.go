@@ -171,6 +171,7 @@ func Clusters(schemas *types.Schemas, managementContext *config.ScaledContext, c
 
 	schema := schemas.Schema(&managementschema.Version, client.ClusterType)
 	schema.Formatter = ccluster.Formatter
+	schema.Validator = ccluster.Validator
 	schema.ActionHandler = handler.ClusterActionHandler
 	schema.Store = &cluster.Store{
 		Store:        schema.Store,
