@@ -113,12 +113,8 @@ func (c *configMapController) Lister() ConfigMapLister {
 }
 
 func (c *configMapController) AddHandler(name string, handler ConfigMapHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*v1.ConfigMap))
@@ -126,15 +122,7 @@ func (c *configMapController) AddHandler(name string, handler ConfigMapHandlerFu
 }
 
 func (c *configMapController) AddClusterScopedHandler(name, cluster string, handler ConfigMapHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

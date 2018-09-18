@@ -113,12 +113,8 @@ func (c *secretController) Lister() SecretLister {
 }
 
 func (c *secretController) AddHandler(name string, handler SecretHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*v1.Secret))
@@ -126,15 +122,7 @@ func (c *secretController) AddHandler(name string, handler SecretHandlerFunc) {
 }
 
 func (c *secretController) AddClusterScopedHandler(name, cluster string, handler SecretHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

@@ -112,12 +112,8 @@ func (c *eventController) Lister() EventLister {
 }
 
 func (c *eventController) AddHandler(name string, handler EventHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*v1.Event))
@@ -125,15 +121,7 @@ func (c *eventController) AddHandler(name string, handler EventHandlerFunc) {
 }
 
 func (c *eventController) AddClusterScopedHandler(name, cluster string, handler EventHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

@@ -112,12 +112,8 @@ func (c *workloadController) Lister() WorkloadLister {
 }
 
 func (c *workloadController) AddHandler(name string, handler WorkloadHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*Workload))
@@ -125,15 +121,7 @@ func (c *workloadController) AddHandler(name string, handler WorkloadHandlerFunc
 }
 
 func (c *workloadController) AddClusterScopedHandler(name, cluster string, handler WorkloadHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

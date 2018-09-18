@@ -111,12 +111,8 @@ func (c *listenConfigController) Lister() ListenConfigLister {
 }
 
 func (c *listenConfigController) AddHandler(name string, handler ListenConfigHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*ListenConfig))
@@ -124,15 +120,7 @@ func (c *listenConfigController) AddHandler(name string, handler ListenConfigHan
 }
 
 func (c *listenConfigController) AddClusterScopedHandler(name, cluster string, handler ListenConfigHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

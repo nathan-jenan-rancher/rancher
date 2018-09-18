@@ -112,12 +112,8 @@ func (c *sourceCodeCredentialController) Lister() SourceCodeCredentialLister {
 }
 
 func (c *sourceCodeCredentialController) AddHandler(name string, handler SourceCodeCredentialHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*SourceCodeCredential))
@@ -125,15 +121,7 @@ func (c *sourceCodeCredentialController) AddHandler(name string, handler SourceC
 }
 
 func (c *sourceCodeCredentialController) AddClusterScopedHandler(name, cluster string, handler SourceCodeCredentialHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

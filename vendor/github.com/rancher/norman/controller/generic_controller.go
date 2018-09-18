@@ -36,7 +36,7 @@ func init() {
 	}
 }
 
-type HandlerFunc func(key string) error
+type HandlerFunc func(key string, obj interface{}) error
 
 type GenericController interface {
 	Informer() cache.SharedIndexInformer
@@ -254,10 +254,13 @@ func filterConflictsError(err error) error {
 func (g *genericController) syncHandler(s string) (err error) {
 	defer utilruntime.RecoverFromPanic(&err)
 
+
+	obj, _, err := g.Informer().GetStore().GetByKey(s)
+
 	var errs []error
 	for _, handler := range g.handlers {
 		logrus.Debugf("%s calling handler %s %s", g.name, handler.name, s)
-		if err := handler.handler(s); err != nil {
+		if err := handler.handler(s, obj); err != nil {
 			errs = append(errs, &handlerError{
 				name: handler.name,
 				err:  err,

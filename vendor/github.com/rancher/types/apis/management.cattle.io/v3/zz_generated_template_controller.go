@@ -111,12 +111,8 @@ func (c *templateController) Lister() TemplateLister {
 }
 
 func (c *templateController) AddHandler(name string, handler TemplateHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*Template))
@@ -124,15 +120,7 @@ func (c *templateController) AddHandler(name string, handler TemplateHandlerFunc
 }
 
 func (c *templateController) AddClusterScopedHandler(name, cluster string, handler TemplateHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

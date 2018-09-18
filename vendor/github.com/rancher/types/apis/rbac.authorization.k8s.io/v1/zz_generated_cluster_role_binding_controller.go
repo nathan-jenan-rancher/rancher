@@ -112,12 +112,8 @@ func (c *clusterRoleBindingController) Lister() ClusterRoleBindingLister {
 }
 
 func (c *clusterRoleBindingController) AddHandler(name string, handler ClusterRoleBindingHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*v1.ClusterRoleBinding))
@@ -125,15 +121,7 @@ func (c *clusterRoleBindingController) AddHandler(name string, handler ClusterRo
 }
 
 func (c *clusterRoleBindingController) AddClusterScopedHandler(name, cluster string, handler ClusterRoleBindingHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}

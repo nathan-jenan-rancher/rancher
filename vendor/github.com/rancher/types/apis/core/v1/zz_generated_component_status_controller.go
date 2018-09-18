@@ -112,12 +112,8 @@ func (c *componentStatusController) Lister() ComponentStatusLister {
 }
 
 func (c *componentStatusController) AddHandler(name string, handler ComponentStatusHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
+		if obj == nil {
 			return handler(key, nil)
 		}
 		return handler(key, obj.(*v1.ComponentStatus))
@@ -125,15 +121,7 @@ func (c *componentStatusController) AddHandler(name string, handler ComponentSta
 }
 
 func (c *componentStatusController) AddClusterScopedHandler(name, cluster string, handler ComponentStatusHandlerFunc) {
-	c.GenericController.AddHandler(name, func(key string) error {
-		obj, exists, err := c.Informer().GetStore().GetByKey(key)
-		if err != nil {
-			return err
-		}
-		if !exists {
-			return handler(key, nil)
-		}
-
+	c.GenericController.AddHandler(name, func(key string, obj interface{}) error {
 		if !controller.ObjectInCluster(cluster, obj) {
 			return nil
 		}
